@@ -2,6 +2,8 @@ package hello.login.web.login;
 
 import hello.login.domain.login.LoginService;
 import hello.login.domain.member.Member;
+import hello.login.web.SessionConst;
+import hello.login.web.session.SessionManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
@@ -11,7 +13,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 @Slf4j
 @Controller
@@ -20,15 +24,16 @@ public class LoginController {
 
     private final LoginService loginService;
 
+    private final SessionManager sessionManager;
+
     @GetMapping(value = "/login")
     public String loginForm(@ModelAttribute("loginForm") LoginForm form) {
         return "login/loginForm";
     }
 
-    @PostMapping(value = "/login")
-    public String login(@Validated @ModelAttribute LoginForm form, BindingResult bindingResult, HttpServletResponse response) {
-        if (bindingResult.hasErrors())
-            return "login/loginForm";
+    //    @PostMapping(value = "/login")
+    public String loginV1(@Validated @ModelAttribute LoginForm form, BindingResult bindingResult, HttpServletResponse response) {
+        if (bindingResult.hasErrors()) return "login/loginForm";
         Member loginMember = this.loginService.login(form.getLoginId(), form.getPassword());
         if (loginMember == null) {
             bindingResult.reject("loginFail", "아이디 또는 비밀번호가 맞지 않습니다.");
@@ -41,9 +46,57 @@ public class LoginController {
         return "redirect:/";
     }
 
-    @PostMapping(value = "/logout")
-    public String logout(HttpServletResponse response) {
+    //    @PostMapping(value = "/login")
+    public String loginV2(@Validated @ModelAttribute LoginForm form, BindingResult bindingResult, HttpServletResponse response) {
+        if (bindingResult.hasErrors()) return "login/loginForm";
+        Member loginMember = this.loginService.login(form.getLoginId(), form.getPassword());
+        if (loginMember == null) {
+            bindingResult.reject("loginFail", "아이디 또는 비밀번호가 맞지 않습니다.");
+            return "login/loginForm";
+        }
+
+        this.sessionManager.createSession(loginMember, response);
+
+        return "redirect:/";
+    }
+
+    @PostMapping(value = "/login")
+    public String loginV3(@Validated @ModelAttribute LoginForm form, BindingResult bindingResult, HttpServletRequest request) {
+        if (bindingResult.hasErrors()) return "login/loginForm";
+        Member loginMember = this.loginService.login(form.getLoginId(), form.getPassword());
+        if (loginMember == null) {
+            bindingResult.reject("loginFail", "아이디 또는 비밀번호가 맞지 않습니다.");
+            return "login/loginForm";
+        }
+
+        //Login 성공 처
+        //Session이 있으면 Session 반환, 없으면 신규 Session 생성
+        HttpSession session = request.getSession();
+        //Session에 Login Member 정보 저장
+        session.setAttribute(SessionConst.LOGIN_MEMBER, loginMember);
+
+//        this.sessionManager.createSession(loginMember, response);
+
+        return "redirect:/";
+    }
+
+    //    @PostMapping(value = "/logout")
+    public String logoutV1(HttpServletResponse response) {
         expireCookie(response, "memberId");
+        return "redirect:/";
+    }
+
+    //    @PostMapping(value = "/logout")
+    public String logoutV2(HttpServletRequest request) {
+        this.sessionManager.expire(request);
+        return "redirect:/";
+    }
+
+    @PostMapping(value = "/logout")
+    public String logoutV3(HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+        if (session != null)
+            session.invalidate();
         return "redirect:/";
     }
 
