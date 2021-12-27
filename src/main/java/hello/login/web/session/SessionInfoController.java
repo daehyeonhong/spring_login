@@ -11,20 +11,24 @@ import java.util.Date;
 @RestController
 public class SessionInfoController {
 
-    @GetMapping(value = "/session-info")
+    @GetMapping("/session-info")
     public String sessionInfo(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
-        if (session == null)
+        if (session == null) {
             return "세션이 없습니다.";
+        }
+
+        //세션 데이터 출력
         session.getAttributeNames().asIterator()
                 .forEachRemaining(name -> log.info("session name={}, value={}", name, session.getAttribute(name)));
 
         log.info("sessionId={}", session.getId());
-        log.info("sessionMaxInactiveInterval={}", session.getMaxInactiveInterval());
-        log.info("sessionCreationTime={}", new Date(session.getCreationTime()));
-        log.info("sessionLastAccessedTime={}", new Date(session.getLastAccessedTime()));
-        log.info("sessionIsNew={}", session.isNew());
-        return "Session Print";
-    }
+        log.info("getMaxInactiveInterval={}", session.getMaxInactiveInterval());
+        log.info("creationTime={}", new Date(session.getCreationTime()));
+        log.info("lastAccessedTime={}", new Date(session.getLastAccessedTime()));
+        log.info("isNew={}", session.isNew());
 
+        return "세션 출력";
+
+    }
 }

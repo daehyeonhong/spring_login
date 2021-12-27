@@ -28,6 +28,7 @@ public class ItemController {
 
     @GetMapping
     public String items(Model model) {
+        //로그인 여부 체크
         List<Item> items = itemRepository.findAll();
         model.addAttribute("items", items);
         return "items/items";
@@ -35,6 +36,7 @@ public class ItemController {
 
     @GetMapping("/{itemId}")
     public String item(@PathVariable long itemId, Model model) {
+        //로그인 여부 체크
         Item item = itemRepository.findById(itemId);
         model.addAttribute("item", item);
         return "items/item";
@@ -42,6 +44,7 @@ public class ItemController {
 
     @GetMapping("/add")
     public String addForm(Model model) {
+        //로그인 여부 체크
         model.addAttribute("item", new Item());
         return "items/addForm";
     }

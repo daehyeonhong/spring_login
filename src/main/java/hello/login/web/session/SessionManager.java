@@ -10,7 +10,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Session 관리
+ * 세션 관리
  */
 @Component
 public class SessionManager {
@@ -19,49 +19,46 @@ public class SessionManager {
     private Map<String, Object> sessionStore = new ConcurrentHashMap<>();
 
     /**
-     * Session 생성
-     * * sessionId 생성 (임의의 추정 불가능한 RANDOM_VALUE->UUID)
-     * * Session Store에 sessionId와 보관할 값 저장
-     * * sessionId로 response cookie 생성해서 client에 전달
+     * 세션 생성
      */
     public void createSession(Object value, HttpServletResponse response) {
-        // sessionId 생성하고, 값을 저장
+
+        //세션 id를 생성하고, 값을 세션에 저장
         String sessionId = UUID.randomUUID().toString();
+        sessionStore.put(sessionId, value);
 
-        this.sessionStore.put(sessionId, value);
-
-        // Cookie 생성
+        //쿠키 생성
         Cookie mySessionCookie = new Cookie(SESSION_COOKIE_NAME, sessionId);
         response.addCookie(mySessionCookie);
     }
 
     /**
-     * Session 조희
-     * @param request
-     * @return
+     * 세션 조회
      */
     public Object getSession(HttpServletRequest request) {
         Cookie sessionCookie = findCookie(request, SESSION_COOKIE_NAME);
-        if (sessionCookie == null)
+        if (sessionCookie == null) {
             return null;
-        return this.sessionStore.get(sessionCookie.getValue());
+        }
+        return sessionStore.get(sessionCookie.getValue());
     }
 
     /**
-     * Session expire
-     * @param request
+     * 세션 만료
      */
     public void expire(HttpServletRequest request) {
         Cookie sessionCookie = findCookie(request, SESSION_COOKIE_NAME);
-        if (sessionCookie != null)
-            this.sessionStore.remove(sessionCookie.getValue());
+        if (sessionCookie != null) {
+            sessionStore.remove(sessionCookie.getValue());
+        }
     }
 
-    private Cookie findCookie(HttpServletRequest request, String cookieName) {
-        Cookie[] cookies = request.getCookies();
-        if (cookies == null)
+
+    public Cookie findCookie(HttpServletRequest request, String cookieName) {
+        if (request.getCookies() == null) {
             return null;
-        return Arrays.stream(cookies)
+        }
+        return Arrays.stream(request.getCookies())
                 .filter(cookie -> cookie.getName().equals(cookieName))
                 .findAny()
                 .orElse(null);

@@ -15,15 +15,18 @@ public class LogInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+
         String requestURI = request.getRequestURI();
         String uuid = UUID.randomUUID().toString();
 
-        //@RequestMapping: HandlerMethod
-        //Static Resource: ResourceHttpRequestHandler
         request.setAttribute(LOG_ID, uuid);
+
+        //@RequestMapping: HandlerMethod
+        //정적 리소스: ResourceHttpRequestHandler
         if (handler instanceof HandlerMethod) {
-            HandlerMethod handlerMethod = (HandlerMethod) handler;//호출할 컨트롤러 메소드의 모든 정보가 포함되어 있다.
+            HandlerMethod hm = (HandlerMethod) handler;//호출할 컨트롤러 메서드의 모든 정보가 포함되어 있다.
         }
+
         log.info("REQUEST [{}][{}][{}]", uuid, requestURI, handler);
         return true;
     }
@@ -36,8 +39,11 @@ public class LogInterceptor implements HandlerInterceptor {
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
         String requestURI = request.getRequestURI();
-        String logId = String.valueOf(request.getAttribute(LOG_ID));
-        log.info("RESPONSE[{}][{}][{}]", logId, requestURI, handler);
-        if (ex != null) log.error("afterCompletion Error!!:", ex);
+        String logId = (String) request.getAttribute(LOG_ID);
+        log.info("RESPONSE [{}][{}][{}]", logId, requestURI, handler);
+        if (ex != null) {
+            log.error("afterCompletion error!!", ex);
+        }
+
     }
 }
